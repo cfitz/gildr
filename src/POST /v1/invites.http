@@ -1,0 +1,11 @@
+POST http://0.0.0.0:8080/v1/invites
+Content-Type: application/json
+
+{
+  "invite": {
+    "guild_id": "1a5a426c-5ad7-4a8f-86ce-378284920669",
+    "invitee_id": "1a5a426c-5ad7-4a8f-86ce-378284920669",
+    "invitor_id": "1a5a426c-5ad7-4a8f-86ce-378284920669"
+
+  }
+}

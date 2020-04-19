@@ -1,0 +1,10 @@
+POST http://0.0.0.0:8080/v1/players
+Content-Type: application/json
+Authorization: Bearer "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoicm9vdCJ9.0lYw8VosroQVudwBvxx39Zvf9-A_jPfZUlGanJLFWKE"
+
+{
+  "player": {
+    "name": "root2",
+    "password": "test"
+  }
+}

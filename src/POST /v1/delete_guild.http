@@ -1,0 +1,4 @@
+DELETE http://0.0.0.0:8080/v1/guilds/fefb7be3-9f5c-4c18-962e-3b8758b3cf0a
+Content-Type: application/json
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoiNmY2OTlkNjAtYjI2Mi00YTFlLTliMGEtZjMxNzgxOGRmNzNjIn0.6jPzy0sF7Z5MnUIkHsQYhx7yzVRmxQoNJ3wY3wO9uJk
+

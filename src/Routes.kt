@@ -6,30 +6,31 @@ import io.ktor.auth.UserIdPrincipal
 import io.ktor.auth.authenticate
 import io.ktor.auth.principal
 import io.ktor.http.HttpStatusCode
-import io.ktor.locations.*
+import io.ktor.locations.delete
+import io.ktor.locations.get
+import io.ktor.locations.patch
+import io.ktor.locations.post
 import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.Route
-import io.ktor.routing.route
-import io.ktor.util.KtorExperimentalAPI
-import io.ktor.util.getDigestFunction
-import io.ktor.util.hex
-import java.security.MessageDigest
 import java.util.*
-import javax.crypto.Mac
-import javax.crypto.spec.SecretKeySpec
 
-fun hash(password: String): String {
-    val digester = getDigestFunction("SHA-256") { "ktor${it.length}" }
-    val digest = digester(password)
-    return Base64.getEncoder().encodeToString(digest)
-}
 
-fun Route.players(playerStore: PlayerStore) {
+fun Route.players(store: DAOFacade, hash: (String) -> String) {
     authenticate {
         get<Players> {
-            val players = playerStore.listAll()
+            val players = store.listAllPlayers()
             call.respond(mapOf("players" to players))
+        }
+
+        get<Profile> { profile ->
+            val id = UUID.fromString(profile.id)
+            val player = store.playerProfile(id)
+            if (player != null) {
+                call.respond(player)
+            } else {
+                call.respond(HttpStatusCode.NotFound, "Player not found")
+            }
         }
     }
 
@@ -37,44 +38,23 @@ fun Route.players(playerStore: PlayerStore) {
     post<Players> {
         val json = call.receive<PostPlayer>()
         val player = Player(name = json.player.name, password = hash(json.player.password))
-        playerStore.add(player)
+        store.add(player)
         call.respond(player)
     }
 }
 
-/* This is bad. Instead there should be a profileStore that has the information. */
-fun Route.playerProfile(playerStore: PlayerStore, guildStore: GuildStore, inviteStore: InviteStore) {
-    authenticate {
-        get<Profile> { profile ->
-            val id = UUID.fromString(profile.id)
-            val player = playerStore.byId(id)
-            if (player != null) {
-                call.respond(
-                    mapOf(
-                        "player" to player,
-                        "memberOf" to guildStore.byMember(id),
-                        "ownerOf" to guildStore.byOwner(id),
-                        "invitesSent" to inviteStore.byInvitor(id),
-                        "invitesReceived" to inviteStore.byInvitee(id)
-                    )
-                )
-            } else {
-                call.respond(HttpStatusCode.NotFound, "Player not found")
-            }
-        }
-    }
-}
 
-
-fun Route.guilds(guildStore: GuildStore) {
+fun Route.guilds(store: DAOFacade) {
     authenticate {
 
+        // *A player should be able to search for existing guilds by name
         get<Guilds> { query ->
             val q = query.q
-            val guilds = guildStore.listAll().filter { it.name.startsWith(q, true) }
+            val guilds = store.listAllGuilds().filter { it.name.startsWith(q, true) }
             call.respond(mapOf("guilds" to guilds))
         }
 
+        // *A player should be able to create a guild (becoming the guild owner)
         post<Guilds> {
             val json = call.receive<PostGuild>().guild
             val principal = call.principal<UserIdPrincipal>() ?: error("No principal")
@@ -85,98 +65,69 @@ fun Route.guilds(guildStore: GuildStore) {
                 description = json.description,
                 memberIds = json.memberIds
             )
-            guildStore.add(guild)
+            store.add(guild)
             call.respond(guild)
         }
-    }
-}
 
-/* This is bad. Instead there should be a store that has the information. */
-fun Route.guildProfile(playerStore: PlayerStore, guildStore: GuildStore, inviteStore: InviteStore) {
-    authenticate {
+        // A guild should provide a way of listing all members
         get<GuildProfile> { profile ->
             val id = UUID.fromString(profile.id)
-            val guild = guildStore.byId(id)
+            val guild = store.guildProfile(id)
             if (guild != null) {
-                call.respond(
-                    mapOf(
-                        "guild" to guild,
-                        "members" to guild.memberIds.map { playerStore.byId(it) },
-                        "owners" to guild.ownerIds.map { playerStore.byId(it) },
-                        "invitesSent" to inviteStore.byInvitor(id),
-                        "invitesReceived" to inviteStore.byInvitee(id)
-                    )
-                )
+                call.respond(guild)
             } else {
                 call.respond(HttpStatusCode.NotFound, "Guild not found")
             }
         }
 
+        // *A guild owner can disband the guild
         delete<GuildProfile> { profile ->
             val id = UUID.fromString(profile.id)
-            val guild = guildStore.byId(id)
+            val guild = store.guildById(id)
             val principal = call.principal<UserIdPrincipal>() ?: error("No principal")
             val ownerId = UUID.fromString(principal.name)
             if (guild != null && guild.ownerIds.any { it == ownerId }) {
-                guildStore.remove(id)
+                store.remove("guild", id)
                 call.respond(HttpStatusCode.OK, "OK!")
             } else {
                 call.respond(HttpStatusCode.NotFound, "Guild not found")
             }
         }
 
-
-    }
-}
-
-fun Route.guildMembership(guildStore: GuildStore) {
-    authenticate {
-
-        put<GuildJoin> { profile ->
+        // *A player should be able to leave a guild
+        patch<GuildJoin> { profile ->
             val id = UUID.fromString(profile.id)
-            val guild = guildStore.byId(id)
             val principal = call.principal<UserIdPrincipal>() ?: error("No principal")
-            val player = UUID.fromString(principal.name)
-            if (guild != null) {
-                val memberIds = guild.memberIds.union(listOf(UUID.fromString(principal.name))).distinct()
-                val update = guild.copy(memberIds = memberIds)
-                if (update.validate()) {
-                    guildStore.add(update)
-                    call.respond(update)
-                }
+            val update = store.addGuildMember(UUID.fromString(principal.name), id)
+            if (update !== false) {
+                call.respond(HttpStatusCode.OK, "Welcome.")
             } else {
                 call.respond(HttpStatusCode.NotFound, "Guild not found")
             }
         }
 
-        put<GuildLeave> { profile ->
+        // *A player should be able to leave a guild
+        patch<GuildLeave> { profile ->
             val id = UUID.fromString(profile.id)
-            val guild = guildStore.byId(id)
             val principal = call.principal<UserIdPrincipal>() ?: error("No principal")
-            val player = UUID.fromString(principal.name)
-            if (guild != null) {
-                val uuid = UUID.fromString(principal.name)
-                val memberIds = guild.memberIds.filterNot { it == uuid  }.distinct()
-                val ownerIds = guild.ownerIds.filterNot { it == uuid }.distinct()
-                val update = guild.copy(memberIds = memberIds, ownerIds = ownerIds)
-                if (update.validate()) {
-                    guildStore.add(update)
-                    call.respond(update)
-                }
+            val update = store.removePlayerFromGuild(UUID.fromString(principal.name), id)
+            if (update !== false) {
+                call.respond(HttpStatusCode.OK, "Goodbye.")
             } else {
                 call.respond(HttpStatusCode.NotFound, "Guild not found")
             }
         }
 
-
-        put<GuildMembership> { profile ->
+        // A guild owner can kick people out of the guild
+        // *A guild owner can make other members into guild owners
+        patch<GuildAdmin> { profile ->
             val id = UUID.fromString(profile.id)
-            val guild = guildStore.byId(id)
+            val guild = store.guildById(id)
             val principal = call.principal<UserIdPrincipal>() ?: error("No principal")
             val ownerId = UUID.fromString(principal.name)
+            // this should all be moved somewhere else..
             if (guild != null && guild.ownerIds.any { it == ownerId }) {
                 val json = call.receive<GuildMembershipUpdate>()
-
                 val members = guild.memberIds.toMutableList()
                 if (json.members !== null) {
                     members.addAll(json.members?.onboard ?: listOf())
@@ -190,17 +141,18 @@ fun Route.guildMembership(guildStore: GuildStore) {
                 }
 
                 val update = guild.copy(ownerIds = owners.distinct(), memberIds = members.distinct())
-                if (update.validate()) {
-                    guildStore.add(update)
-                    call.respond(update)
-                }
+                store.add(update)
+                call.respond(HttpStatusCode.OK, "OK")
             } else {
                 call.respond(HttpStatusCode.NotFound, "Guild not found")
             }
         }
 
+
     }
 }
+
+/*
 
 fun Route.invites(inviteStore: InviteStore) {
     authenticate {
@@ -217,3 +169,4 @@ fun Route.invites(inviteStore: InviteStore) {
         }
     }
 }
+*/

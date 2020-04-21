@@ -1,9 +1,0 @@
-PUT http://0.0.0.0:8080/v1/guilds/d42744fa-79ee-477b-aafb-a803fc66e6a8/membership
-Content-Type: application/json
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoiNmY2OTlkNjAtYjI2Mi00YTFlLTliMGEtZjMxNzgxOGRmNzNjIn0.6jPzy0sF7Z5MnUIkHsQYhx7yzVRmxQoNJ3wY3wO9uJk
-
-{
-"owners": {
-"onboard": ["5915db6d-f5f4-4ec3-9c6b-fe525fd7c8f6"]
-}
-}

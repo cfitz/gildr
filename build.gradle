@@ -5,11 +5,14 @@ buildscript {
     
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.github.jengelman.gradle.plugins:shadow:5.2.0'
     }
 }
 
+apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'kotlin'
 apply plugin: 'application'
+apply plugin: 'distribution'
 
 group 'dog.wildtulsa'
 version '0.0.1'
@@ -21,6 +24,19 @@ sourceSets {
     main.resources.srcDirs = ['resources']
     test.resources.srcDirs = ['testresources']
 }
+
+
+
+distributions {
+    main {
+        contents {
+            from("README.md")
+            from("Dockerfile")
+        }
+    }
+}
+
+
 
 repositories {
     mavenLocal()
@@ -46,4 +62,10 @@ dependencies {
     testCompile "io.ktor:ktor-server-test-host:$ktor_version"
     compile "org.ehcache:ehcache:3.0.0.m4"
     compile "com.google.code.gson:gson:2.7"
+}
+
+shadowJar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
 }

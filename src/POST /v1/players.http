@@ -4,7 +4,7 @@ Authorization: Bearer "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoicm9vdCJ9
 
 {
   "player": {
-    "name": "root2",
+    "name": "root",
     "password": "test"
   }
 }

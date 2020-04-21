@@ -1,11 +1,10 @@
 POST http://0.0.0.0:8080/v1/guilds
 Content-Type: application/json
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoiNmY2OTlkNjAtYjI2Mi00YTFlLTliMGEtZjMxNzgxOGRmNzNjIn0.6jPzy0sF7Z5MnUIkHsQYhx7yzVRmxQoNJ3wY3wO9uJk
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoiY2VhNzA0ODktNDNjMi00ZThmLTliMjctODE4M2YxZTU3MmFmIn0.6-2cOAL4SVFN5Fk0PUq78mMEY2X5d4kWw6CZ0CGLj30
 
 {
   "guild": {
     "name": "rad dads2",
-    "description": "over the world",
-    "ownerIds": ["6f699d60-b262-4a1e-9b0a-f317818df73c"]
+    "description": "over the world"
   }
 }

@@ -1,7 +1,9 @@
 # Guildr Application
 
+[![Build Status](https://travis-ci.com/cfitz/gildr.svg?branch=master)](https://travis-ci.com/cfitz/gildr)
+
 ### Features:
-- Build in Kotlin using Ktor (https://ktor.io/)
+- Built in Kotlin using Ktor (https://ktor.io/)
 - A namespaced RESTful API
 - JWT Token authentication
 - No database needed ( all data is stored as JSON in a .data directory )
@@ -18,7 +20,10 @@
 | [x] | /login  | POST | Generate a JWT  |   |
 | [x]  | /v1/players  | GET | List all players | * |
 | [x]  | /v1/players   | POST | Create a new player |   |
-| [x]  | /v1/players/:id  | GET | Show a player profile | * |
+| [x]  | /v1/players/:id  | GET | Show a player profile ( shows name and all guild affiliations ) | * |
+| []  | /v1/players/:id/invites  | GET | Show a players invites | * |
+| []  | /v1/players/:id/invites  | POST | Invite a player to a guild | * |
+| []  | /v1/players/:id/invites/:invite_id  | PATCH | Update the status of an invite (accept / decline ) | * |
 | [x]  | /v1/guilds  | GET | List all guilds (option q param for search by name )   | * |
 | [x]  | /v1/guilds  | POST | Create a guild  | *   |
 | [x]  | /v1/guilds/:id  | GET | Show a guild profile  | * |
@@ -113,7 +118,7 @@ TOKEN=$(curl -X POST -H "Content-Type: application/json" -d '{"name": "player1",
 
 #### Create a guild
 
-We are finally ready to create a guild:
+We are finally ready to create a guild. We need to provide a name and a description:
 
 ```bash
 curl -X POST  -H "Content-Type: application/json"  -H "Authorization: Bearer ${TOKEN}" -d '{"guild": {"name":"rad dads","description":"dads are cool."}}' http://localhost:8080/v1/guilds
@@ -165,7 +170,7 @@ curl  -H "Content-Type: application/json"  -H "Authorization: Bearer ${TOKEN}"  
 We can also list all our guilds in the /v1/guilds endpoint:
 
 ```bash
-curl  -H "Content-Type: application/json"  -H "Authorization: Bearer ${TOKEN}"  http://localhost:8080/v1/guilds/3bdef52b-c048-49f0-9943-a8ca667322b2
+curl  -H "Content-Type: application/json"  -H "Authorization: Bearer ${TOKEN}"  http://localhost:8080/v1/guilds
 ```
 
 We can also very simple "starts-with" searches for guilds with a "q=" parameter:

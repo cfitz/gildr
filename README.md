@@ -11,7 +11,25 @@
 - Java 8 or higher
 
 
-### Quickstart
+### Overview:
+
+| Implemented  | PATH   | ACTION   | RESULT  | JWT required  |
+|---|---|---|---|---|
+| [x] | /login  | POST | Generate a JWT  |   |
+| [x]  | /v1/players  | GET | List all players | * |
+| [x]  | /v1/players   | POST | Create a new player |   |
+| [x]  | /v1/players/:id  | GET | Show a player profile | * |
+| [x]  | /v1/guilds  | GET | List all guilds (option q param for search by name )   | * |
+| [x]  | /v1/guilds  | POST | Create a guild  | *   |
+| [x]  | /v1/guilds/:id  | GET | Show a guild profile  | * |
+| [x]  | /v1/guilds/:id  | DELETE | Disband a guild  | * |
+| [x]  | /v1/guilds/:id/join  | PATCH | User request to join a guild  | * |
+| [x]  | /v1/guilds/:id/leave  | PATCH | User request to leave a guild  | * |
+| [x]  | /v1/guilds/:id/admin  | PATCH | Owner request to add members/owners  | * |
+ 
+
+
+### Quickstart:
 
 First unzip the distribution:
 ```bash
